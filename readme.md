@@ -28,10 +28,11 @@ This guide walks you through migrating a Java application to Azure using GitHub 
   - [Running PetClinic Locally](#running-petclinic-locally)
     - [Option A: Quick Start (In-Memory Database)](#option-a-quick-start-in-memory-database)
     - [Option B: With PostgreSQL (Docker)](#option-b-with-postgresql-docker)
-      - [Step 1: Start PostgreSQL Container](#step-1-start-postgresql-container)
-      - [Step 2: Wait for Database to Initialize](#step-2-wait-for-database-to-initialize)
+      - [Step 1: Free Up Ports](#step-1-free-up-ports)
+      - [Step 2: Start PostgreSQL Container](#step-2-start-postgresql-container)
       - [Step 3: Run the Application](#step-3-run-the-application)
       - [Step 4: Explore the Application](#step-4-explore-the-application)
+      - [Cleanup](#cleanup)
   - [App Modernization](#app-modernization)
     - [Modernization Prerequisites](#modernization-prerequisites)
       - [GitHub Account \& Copilot Access](#github-account--copilot-access)
@@ -182,9 +183,33 @@ Access the app at: **http://localhost:8080**
 
 ### Option B: With PostgreSQL (Docker)
 
-Use this to match the production environment.
+Use this to match the production environment. Requires **Docker Desktop** running with **Linux containers**.
 
-#### Step 1: Start PostgreSQL Container
+#### Step 1: Free Up Ports
+
+Before starting, ensure ports **5432** and **8080** are not in use by other services.
+
+**Check for port conflicts:**
+```powershell
+netstat -ano | findstr ":5432 .*LISTENING"
+netstat -ano | findstr ":8080 .*LISTENING"
+```
+
+If a native PostgreSQL service (e.g., EDB PostgreSQL) is occupying port 5432, stop it:
+```powershell
+# Requires an elevated (Admin) PowerShell prompt
+Stop-Service -Name "postgresql*"
+```
+
+If another process is on port 8080 (e.g., Apache httpd bundled with EDB), stop it:
+```powershell
+# Find the PID from the netstat output above, then:
+Stop-Process -Id <PID> -Force
+```
+
+> **Tip:** If `Stop-Service` or `Stop-Process` fails with "Access Denied", run the command in an **elevated PowerShell** (Run as Administrator).
+
+#### Step 2: Start PostgreSQL Container
 
 ```powershell
 docker run -d --name petclinic-postgres `
@@ -195,11 +220,17 @@ docker run -d --name petclinic-postgres `
   postgres:15
 ```
 
-#### Step 2: Wait for Database to Initialize
-
+Wait a few seconds for the database to initialize:
 ```powershell
 Start-Sleep -Seconds 10
 ```
+
+**Verify the container is running:**
+```powershell
+docker ps --filter "name=petclinic-postgres"
+```
+
+You should see the container listed with status `Up`.
 
 #### Step 3: Run the Application
 
@@ -208,15 +239,27 @@ cd spring-petclinic
 .\mvnw spring-boot:run "-Dspring-boot.run.profiles=postgres"
 ```
 
+The `postgres` profile activates PostgreSQL-specific configuration and seeds the database with sample data on first startup.
+
+> **Note:** The first run downloads Maven dependencies and may take a few minutes. Subsequent runs will be faster.
+
 Access the app at: **http://localhost:8080**
 
 #### Step 4: Explore the Application
 
 Once running, try features like:
-- **Find Owners** — search and browse owner records
+- **Find Owners** — search and browse owner records (e.g., George Franklin, Betty Davis)
 - **View Owner Details** — see pets and visit history
 - **Edit Pet Information** — update pet records
 - **Review Veterinarians** — view the vet directory
+
+#### Cleanup
+
+When you're done, stop and remove the PostgreSQL container:
+```powershell
+docker stop petclinic-postgres
+docker rm petclinic-postgres
+```
 
 ---
 
