@@ -518,6 +518,23 @@ spec:
 
 > 💡 **Tip:** If you need to retrieve the Service Connector account name, check your `sc.log` file from the earlier PostgreSQL setup.
 
+Verify Azure PostgreSQL Server is Running
+
+- Before deploying to AKS, ensure your PostgreSQL server is active
+
+```bash
+az postgres flexible-server show --resource-group $env:RESOURCE_GROUP --name $env:POSTGRES_SERVER_NAME --query "{State:state, PublicAccess:network.publicNetworkAccess}" -o json
+
+# If State shows "Stopped", start the server
+az postgres flexible-server start --resource-group $env:RESOURCE_GROUP --name $env:POSTGRES_SERVER_NAME
+
+# Wait for server to be ready (takes ~30 seconds)
+az postgres flexible-server show --resource-group $env:RESOURCE_GROUP --name $env:POSTGRES_SERVER_NAME --query "state" -o tsv
+
+# Verify Firewall Ruless
+az postgres flexible-server firewall-rule list --resource-group $env:RESOURCE_GROUP --name $env:POSTGRES_SERVER_NAME -o table
+```
+
 ---
 
 ## Stage 4: Build and Deploy to Azure
@@ -562,6 +579,13 @@ Watch for:
 - Pods transitioning to `Running` state
 - Service receiving an external IP (if using LoadBalancer)
 - Deployment showing desired number of replicas ready
+
+Initial startup takes 60-90 seconds due to:
+
+- Container image pull (~3-5 seconds)
+- Spring Boot initialization (~20-25 seconds)
+- Database connection and schema initialization (~10-15 seconds)
+- Health probe validation (startup probe with 10s delay + retries)
 
 ---
 
