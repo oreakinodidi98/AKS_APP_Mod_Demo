@@ -4,7 +4,7 @@ This guide walks you through migrating a Java application to Azure using GitHub 
 
 **What the Modernization Will Do:** Transform your application from outdated technologies to a modern Azure-native solution, including:
 
-- Upgrading from **Java 8 → Java 21**
+- Upgrading from **Java 17+ → Java 21**
 - Migrating from **Spring Boot 2.x → 3.x**
 - Replacing **AWS S3 → Azure Blob Storage**
 - Switching from **RabbitMQ → Azure Service Bus**
@@ -111,8 +111,8 @@ Clone the repository and set up your environment using one of the two options be
 
 | Tool | Required For |
 |------|-------------|
-| **JDK 8** | Running the initial application locally |
-| **Java 17+** | Running the modernized application |
+| **JDK 17+** | Running the initial application locally |
+| **Java 21** | Running the modernized application |
 | **Maven 3.6.0+** | Building the application locally |
 | **Docker Desktop** | Running PostgreSQL and containerized services |
 | **Azure CLI** | Option 2 (infrastructure provisioning) |
@@ -145,8 +145,8 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Azure-Samples/aks-labs
 # Run the setup script
 wsl bash ./setup-local-lab-infra.sh
 
-# Install JDK 17
-wsl bash -c "sudo apt update && sudo apt install -y openjdk-17-jdk"
+# Install JDK 21
+wsl bash -c "sudo apt update && sudo apt install -y openjdk-21-jdk"
 
 # Install Docker
 wsl bash -c "sudo apt update && sudo apt install -y docker.io && sudo service docker start && sudo usermod -aG docker $USER"
